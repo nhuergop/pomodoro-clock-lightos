@@ -71,6 +71,7 @@ export default function PomodoroScreen() {
   const [currentSession, setCurrentSession] = useState<number>(1);
   const [isSettingsLoaded, setIsSettingsLoaded] = useState<boolean>(false); // Evita sobreescrituras al iniciar
 
+  const audioContextRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // --- NUEVO: Cargar configuraciones guardadas al iniciar la App ---
@@ -131,69 +132,63 @@ export default function PomodoroScreen() {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
 
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close(); // Cierra el contexto de audio anterior y libera sus recursos
+        } catch (err) {
+          console.warn("Error when trying to close previous context:", err);
+        }
+        audioContextRef.current = null;
+      }
+
       const ctx = new AudioContextClass();
+      audioContextRef.current = ctx;
       const now = ctx.currentTime;
 
+      const playTone = (
+        freq: number, 
+        startTime: number, 
+        duration: number, 
+        volume: number, 
+        typeWave: 'sine' | 'triangle' = 'sine'
+      ) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = typeWave;
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(volume, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      // 4. EJECUCIÓN DE LOS TRES CASOS UTILIZANDO PLAYTONE
       if (type === 'BEEP') {
         // --- BEEP CLÁSICO REPETIDO (Duración: ~7.0 segundos) ---
-        // El mismo beep digital corto (800Hz) repetido rítmicamente cada 1.2 segundos (7 veces)
+        // Beep digital corto (800Hz) repetido rítmicamente cada 1.2 segundos (7 veces)
         for (let i = 0; i < 7; i++) {
           const time = now + (i * 1.2);
-          
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          
-          osc.frequency.setValueAtTime(800, time);
-          gain.gain.setValueAtTime(0.15, time);
-          gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
-          
-          osc.start(time);
-          osc.stop(time + 0.3);
+          playTone(800, time, 0.3, 0.15, 'sine');
         }
       } 
       else if (type === 'BELL') {
         // --- CAMPANA ZEN REPETIDA (Duración: ~9.5 segundos) ---
-        // El cuenco tibetano original (440Hz, decaimiento largo) repetido 5 veces cada 2.5 segundos
+        // Cuenco tibetano original (440Hz, decaimiento largo) repetido 5 veces cada 2.5 segundos
         for (let i = 0; i < 5; i++) {
           const time = now + (i * 2.5);
-
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(440, time);
-          gain.gain.setValueAtTime(0.25, time);
-          gain.gain.exponentialRampToValueAtTime(0.001, time + 1.5);
-          
-          osc.start(time);
-          osc.stop(time + 1.5);
+          playTone(440, time, 1.5, 0.25, 'triangle');
         }
       } 
       else if (type === 'CHIME') {
         // --- CAMPANILLA DOBLE REPETIDA (Duración: ~7.5 segundos) ---
-        // El tintineo doble brillante (880Hz y 1046Hz) repetido 6 veces cada 1.5 segundos
+        // Tintineo doble brillante (880Hz y 1046Hz) repetido 6 veces cada 1.5 segundos
         const playDoubleTone = (startTime: number) => {
-          const playTone = (freq: number, delay: number, duration: number) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, startTime + delay);
-            gain.gain.setValueAtTime(0.12, startTime + delay);
-            gain.gain.exponentialRampToValueAtTime(0.001, startTime + delay + duration);
-            
-            osc.start(startTime + delay);
-            osc.stop(startTime + delay + duration);
-          };
-
-          playTone(880, 0, 0.4);
-          playTone(1046.5, 0.15, 0.5);
+          playTone(880, startTime, 0.4, 0.12, 'sine');
+          playTone(1046.5, startTime + 0.15, 0.5, 0.12, 'sine');
         };
 
         for (let i = 0; i < 6; i++) {
@@ -201,83 +196,9 @@ export default function PomodoroScreen() {
         }
       }
     } catch (e) {
-      console.warn("La síntesis de audio no está disponible o requiere interacción del usuario:", e);
+      console.warn("Audio synthesizing not available or requires user interaction:", e);
     }
   };
-
-  // const playNotificationSound = (type: SoundType) => {
-  //   try {
-  //     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-  //     if (!AudioContextClass) return;
-
-  //     const ctx = new AudioContextClass();
-  //     const now = ctx.currentTime;
-
-  //     // Función auxiliar para programar una nota individual suave
-  //     const playTone = (freq: number, startTime: number, duration: number, typeWave: 'sine' | 'triangle' = 'sine') => {
-  //       const osc = ctx.createOscillator();
-  //       const gain = ctx.createGain();
-
-  //       osc.connect(gain);
-  //       gain.connect(ctx.destination);
-
-  //       osc.type = typeWave;
-  //       osc.frequency.setValueAtTime(freq, startTime);
-
-  //       // Ataque suave (fade-in) para evitar el "clic" inicial molesto
-  //       gain.gain.setValueAtTime(0, startTime);
-  //       gain.gain.linearRampToValueAtTime(0.15, startTime + 0.1);
-
-  //       // Decaimiento exponencial suave (fade-out)
-  //       gain.gain.setValueAtTime(0.15, startTime + duration - 0.2);
-  //       gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-  //       osc.start(startTime);
-  //       osc.stop(startTime + duration);
-  //     };
-
-  //     if (type === 'BEEP') {
-  //       // --- RINGTONE "DIGITAL CALM" (Duración: ~6.5 segundos) ---
-  //       // Un pulso rítmico doble y minimalista que se repite 4 veces.
-  //       // Frecuencias sutiles de sintetizador de bolsillo.
-  //       const tempo = 1.6; // Segundos por ciclo
-  //       for (let i = 0; i < 4; i++) {
-  //         const cycleStart = now + (i * tempo);
-  //         playTone(800.00, cycleStart, 0.2, 'sine');       // Nota Mi (E5)
-  //         playTone(880.00, cycleStart + 0.25, 0.3, 'sine');  // Nota La (A5)
-  //       }
-  //     }
-  //     else if (type === 'BELL') {
-  //       // --- RINGTONE "ZEN TEMPLE" (Duración: ~8.0 segundos) ---
-  //       // Tres golpes lentos de campana tibetana profunda con armónicos ricos.
-  //       // Cada golpe respira y se desvanece antes del siguiente.
-  //       const tempo = 2.6; // Intervalo largo para dejar respirar el sonido
-  //       for (let i = 0; i < 3; i++) {
-  //         const cycleStart = now + (i * tempo);
-  //         // Nota base (grave y cálida)
-  //         playTone(329.63, cycleStart, 2.2, 'triangle');    // Nota Mi (E4)
-  //         // Armónico agudo y sutil para dar brillo metálico
-  //         playTone(659.25, cycleStart + 0.05, 1.8, 'sine'); // Armónico octava superior (E5)
-  //       }
-  //     }
-  //     else if (type === 'CHIME') {
-  //       // --- RINGTONE "FOREST HARP" (Duración: ~7.0 segundos) ---
-  //       // Una cascada arpegiada ascendente inspirada en el viento.
-  //       // Se repite 3 veces con una melodía que fluye de forma orgánica.
-  //       const tempo = 2.2;
-  //       for (let i = 0; i < 3; i++) {
-  //         const cycleStart = now + (i * tempo);
-  //         playTone(523.25, cycleStart, 0.5, 'sine');        // Do (C5)
-  //         playTone(587.33, cycleStart + 0.2, 0.5, 'sine');  // Re (D5)
-  //         playTone(659.25, cycleStart + 0.4, 0.5, 'sine');  // Mi (E5)
-  //         playTone(783.99, cycleStart + 0.6, 0.8, 'sine');  // Sol (G5) - Nota final sostenida
-  //       }
-  //     }
-  //   } catch (e) {
-  //     console.warn("La síntesis de audio no está disponible o requiere interacción del usuario:", e);
-  //   }
-  // };
-
 
   const getSecondsForMode = (targetMode: TimerMode): number => {
     switch (targetMode) {
