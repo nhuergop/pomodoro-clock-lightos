@@ -1,0 +1,15 @@
+ // --- PALETA DE COLORES ULTRA-MINIMALISTA (Tinta Electrónica) ---
+  const colors = {
+    background: isDarkMode ? '#000000' : '#FFFFFF',
+    textPrimary: isDarkMode ? '#FFFFFF' : '#000000',
+    textSecondary: isDarkMode ? '#888888' : '#888888',
+    border: isDarkMode ? '#FFFFFF' : '#000000',
+    borderActive: isDarkMode ? '#FFFFFF' : '#000000',
+    buttonBg: isDarkMode ? '#FFFFFF' : '#000000',
+    buttonText: isDarkMode ? '#000000' : '#FFFFFF',
+    buttonSecBg: isDarkMode ? '#000000' : '#FFFFFF',
+    buttonSecText: isDarkMode ? '#FFFFFF' : '#000000',
+  };
+  
+  // mostrar en todas las pantallas
+  `session ${currentSession} of `
