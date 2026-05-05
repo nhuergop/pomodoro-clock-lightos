@@ -21,7 +21,16 @@ interface UserSettings {
 
 export default function PomodoroScreen() {
   const systemColorScheme = useColorScheme();
-  const isDarkMode = systemColorScheme === 'dark';
+  
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    if (systemColorScheme) {
+      setTheme(systemColorScheme);
+    }
+  }, [systemColorScheme]);
+
+  const isDarkMode = theme === 'dark';
 
   // const colors = {
   //   background: isDarkMode ? '#000000' : '#FFFFFF',
@@ -38,7 +47,7 @@ export default function PomodoroScreen() {
   const colors = {
     background: isDarkMode ? '#000000' : '#FFFFFF',
     textPrimary: isDarkMode ? '#FFFFFF' : '#000000',
-    textSecondary: isDarkMode ? '#888888' : '#888888',
+    textSecondary: isDarkMode ? '#cfcfcf' : '#888888',
     border: isDarkMode ? '#FFFFFF' : '#000000',
     borderActive: isDarkMode ? '#FFFFFF' : '#000000',
     buttonBg: isDarkMode ? '#FFFFFF' : '#000000',
@@ -592,6 +601,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     fontSize: 14,
+    fontWeight: 'bold'
   },
   settingsPanel: {
     width: '100%',
@@ -668,7 +678,7 @@ const styles = StyleSheet.create({
   },
   soundOptionTextActive: {
     fontWeight: 'bold',
-    textDecorationLine: 'underline',
+    // textDecorationLine: 'underline',
   },
   timerContainer: {
     justifyContent: 'center',
