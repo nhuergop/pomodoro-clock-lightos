@@ -135,9 +135,9 @@ export default function PomodoroScreen() {
       const now = ctx.currentTime;
 
       if (type === 'BEEP') {
-        // --- BEEP CLÁSICO REPETIDO (Duración: ~6.0 segundos) ---
-        // El mismo beep digital corto (800Hz) repetido rítmicamente cada 1.2 segundos (6 veces)
-        for (let i = 0; i < 6; i++) {
+        // --- BEEP CLÁSICO REPETIDO (Duración: ~7.0 segundos) ---
+        // El mismo beep digital corto (800Hz) repetido rítmicamente cada 1.2 segundos (7 veces)
+        for (let i = 0; i < 7; i++) {
           const time = now + (i * 1.2);
           
           const osc = ctx.createOscillator();
@@ -154,9 +154,9 @@ export default function PomodoroScreen() {
         }
       } 
       else if (type === 'BELL') {
-        // --- CAMPANA ZEN REPETIDA (Duración: ~7.5 segundos) ---
-        // El cuenco tibetano original (440Hz, decaimiento largo) repetido 4 veces cada 2.5 segundos
-        for (let i = 0; i < 4; i++) {
+        // --- CAMPANA ZEN REPETIDA (Duración: ~9.5 segundos) ---
+        // El cuenco tibetano original (440Hz, decaimiento largo) repetido 5 veces cada 2.5 segundos
+        for (let i = 0; i < 5; i++) {
           const time = now + (i * 2.5);
 
           const osc = ctx.createOscillator();
@@ -174,8 +174,8 @@ export default function PomodoroScreen() {
         }
       } 
       else if (type === 'CHIME') {
-        // --- CAMPANILLA DOBLE REPETIDA (Duración: ~6.5 segundos) ---
-        // El tintineo doble brillante (880Hz y 1046Hz) repetido 5 veces cada 1.5 segundos
+        // --- CAMPANILLA DOBLE REPETIDA (Duración: ~7.5 segundos) ---
+        // El tintineo doble brillante (880Hz y 1046Hz) repetido 6 veces cada 1.5 segundos
         const playDoubleTone = (startTime: number) => {
           const playTone = (freq: number, delay: number, duration: number) => {
             const osc = ctx.createOscillator();
@@ -196,7 +196,7 @@ export default function PomodoroScreen() {
           playTone(1046.5, 0.15, 0.5);
         };
 
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
           playDoubleTone(now + (i * 1.5));
         }
       }
