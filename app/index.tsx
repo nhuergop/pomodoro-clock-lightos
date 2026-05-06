@@ -1,15 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
-// --- NUEVO: Importación para el almacenamiento persistente ---
+import { useAudioPlayer, createAudioPlayer } from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type TimerMode = 'WORK' | 'SHORT_BREAK' | 'LONG_BREAK';
 type SoundType = 'BEEP' | 'BELL' | 'CHIME';
 
-// Clave única para guardar los datos en el dispositivo
 const STORAGE_KEY = '@pomodoro_user_settings_v1';
 
-// Interfaz para tipar el objeto de configuración que persistiremos
 interface UserSettings {
   workMinutes: number;
   shortBreakMinutes: number;
@@ -71,7 +69,10 @@ export default function PomodoroScreen() {
   const [currentSession, setCurrentSession] = useState<number>(1);
   const [isSettingsLoaded, setIsSettingsLoaded] = useState<boolean>(false); // Evita sobreescrituras al iniciar
 
-  const audioContextRef = useRef<AudioContext | null>(null);
+  // Creamos y guardamos la instancia del reproductor nativo
+  const beepPlayer = useRef(createAudioPlayer(require('../assets/sounds/beep.wav'))).current;
+  const bellPlayer = useRef(createAudioPlayer(require('../assets/sounds/bell.wav'))).current;
+  const chimePlayer = useRef(createAudioPlayer(require('../assets/sounds/chime.wav'))).current;
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // --- NUEVO: Cargar configuraciones guardadas al iniciar la App ---
@@ -93,7 +94,7 @@ export default function PomodoroScreen() {
           setSecondsLeft(savedSettings.workMinutes * 60);
         }
       } catch (e) {
-        console.error("Error al cargar las configuraciones:", e);
+        console.error("Error when loading configurations:", e);
       } finally {
         setIsSettingsLoaded(true);
       }
@@ -119,7 +120,7 @@ export default function PomodoroScreen() {
         };
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settingsToSave));
       } catch (e) {
-        console.error("Error al guardar las configuraciones:", e);
+        console.error("Error when saving configurations:", e);
       }
     };
 
@@ -129,74 +130,36 @@ export default function PomodoroScreen() {
 
   const playNotificationSound = (type: SoundType) => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
+     
+      if (beepPlayer && bellPlayer && chimePlayer) {
+        // Pausamos los reproductores si están sonando
+        if (beepPlayer.playing) beepPlayer.pause();
+        if (bellPlayer.playing) bellPlayer.pause();
+        if (chimePlayer.playing) chimePlayer.pause();
 
-      if (audioContextRef.current) {
-        try {
-          audioContextRef.current.close(); // Cierra el contexto de audio anterior y libera sus recursos
-        } catch (err) {
-          console.warn("Error when trying to close previous context:", err);
+        // REINICIO DE TIEMPO CORRECTO usando seekTo (API nativa de expo-audio)
+        if (typeof beepPlayer.seekTo === 'function') {
+          beepPlayer.seekTo(0);
+          bellPlayer.seekTo(0);
+          chimePlayer.seekTo(0);
+        } else {
+          // Fallback por si tu versión exacta usa .seek() en lugar de .seekTo()
+          (beepPlayer as any).seek?.(0);
+          (bellPlayer as any).seek?.(0);
+          (chimePlayer as any).seek?.(0);
         }
-        audioContextRef.current = null;
-      }
 
-      const ctx = new AudioContextClass();
-      audioContextRef.current = ctx;
-      const now = ctx.currentTime;
-
-      const playTone = (
-        freq: number, 
-        startTime: number, 
-        duration: number, 
-        volume: number, 
-        typeWave: 'sine' | 'triangle' = 'sine'
-      ) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        
-        osc.type = typeWave;
-        osc.frequency.setValueAtTime(freq, startTime);
-        gain.gain.setValueAtTime(volume, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-        
-        osc.start(startTime);
-        osc.stop(startTime + duration);
-      };
-
-      // 4. EJECUCIÓN DE LOS TRES CASOS UTILIZANDO PLAYTONE
-      if (type === 'BEEP') {
-        // --- BEEP CLÁSICO REPETIDO (Duración: ~7.0 segundos) ---
-        // Beep digital corto (800Hz) repetido rítmicamente cada 1.2 segundos (7 veces)
-        for (let i = 0; i < 7; i++) {
-          const time = now + (i * 1.2);
-          playTone(800, time, 0.3, 0.15, 'sine');
-        }
-      } 
-      else if (type === 'BELL') {
-        // --- CAMPANA ZEN REPETIDA (Duración: ~9.5 segundos) ---
-        // Cuenco tibetano original (440Hz, decaimiento largo) repetido 5 veces cada 2.5 segundos
-        for (let i = 0; i < 5; i++) {
-          const time = now + (i * 2.5);
-          playTone(440, time, 1.5, 0.25, 'triangle');
-        }
-      } 
-      else if (type === 'CHIME') {
-        // --- CAMPANILLA DOBLE REPETIDA (Duración: ~7.5 segundos) ---
-        // Tintineo doble brillante (880Hz y 1046Hz) repetido 6 veces cada 1.5 segundos
-        const playDoubleTone = (startTime: number) => {
-          playTone(880, startTime, 0.4, 0.12, 'sine');
-          playTone(1046.5, startTime + 0.15, 0.5, 0.12, 'sine');
-        };
-
-        for (let i = 0; i < 6; i++) {
-          playDoubleTone(now + (i * 1.5));
+        // Reproducir el seleccionado
+        if (type === 'BEEP') {
+          beepPlayer.play();
+        } else if (type === 'BELL') {
+          bellPlayer.play();
+        } else if (type === 'CHIME') {
+          chimePlayer.play();
         }
       }
     } catch (e) {
-      console.warn("Audio synthesizing not available or requires user interaction:", e);
+      console.warn("Error when reproducing native sound with expo-audio:", e);
     }
   };
 
@@ -235,8 +198,9 @@ export default function PomodoroScreen() {
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+   
     };
-  }, [isActive, mode, currentSession, totalSessions, workMinutes, shortBreakMinutes, longBreakMinutes, longBreakInterval, selectedSound]);
+  }, [isActive, mode, currentSession, totalSessions, workMinutes, shortBreakMinutes, longBreakMinutes, longBreakInterval]);
 
   const handleTimerComplete = () => {
     playNotificationSound(selectedSound);
