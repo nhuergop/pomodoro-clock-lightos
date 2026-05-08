@@ -184,6 +184,12 @@ export default function PomodoroScreen() {
   };
 
   useEffect(() => {
+    if (!isActive && isSettingsLoaded) {
+      setSecondsLeft(getSecondsForMode(mode));
+    }
+  }, [workMinutes, shortBreakMinutes, longBreakMinutes, mode, isSettingsLoaded]);
+
+  useEffect(() => {
     onTimerCompleteRef.current = handleTimerComplete;
   }, [mode, currentSession, totalSessions, workMinutes, shortBreakMinutes, longBreakMinutes, longBreakInterval]);
 
@@ -207,7 +213,7 @@ export default function PomodoroScreen() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive]); // <--- SOLO depende de isActive
+  }, [isActive, mode, currentSession, totalSessions, workMinutes, shortBreakMinutes, longBreakMinutes, longBreakInterval, selectedSound]);
 
   function handleTimerComplete() {
     playNotificationSound(selectedSound);
@@ -475,7 +481,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 4,
+    marginTop: 20,
+    gap: 8,
   },
   modeText: {
     fontSize: 15,
@@ -605,6 +612,7 @@ const styles = StyleSheet.create({
   },
   resetAllText: {
     marginTop: 8,
+    marginBottom: 12,
     fontSize: 14,
     textDecorationLine: 'underline',
     textTransform: 'lowercase',
