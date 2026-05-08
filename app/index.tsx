@@ -388,9 +388,7 @@ export default function PomodoroScreen() {
       {/* Temporizador */}
       <View style={styles.timerContainer}>
         <Text style={dynamicStyles.timerText}>{formatTime(secondsLeft)}</Text>
-      </View>
-
-      {!isActive && (
+        {!isActive && (
         <View style={styles.breaksConfigContainer}>
           {mode === 'WORK' && (<View style={styles.settingItem}>
             {/* <Text style={dynamicStyles.settingLabel}>focus time: </Text> */}
@@ -428,14 +426,12 @@ export default function PomodoroScreen() {
             </View>
             <Text style={dynamicStyles.settingLabelEnd}>sessions</Text>
           </View>)}
-
-
-
-
-
         </View>
       )}
 
+      </View>
+
+      
       {/* Controles de Acción */}
 
       <View style={styles.controlsContainer}>
@@ -565,7 +561,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 34,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   soundOptions: {
     flexDirection: 'row',
