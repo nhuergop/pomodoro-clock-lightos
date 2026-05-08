@@ -432,27 +432,30 @@ export default function PomodoroScreen() {
 
 
 
-          <View style={styles.soundSelectorContainer}>
-            <Text style={dynamicStyles.settingLabel}>alert sound: </Text>
-            <View style={styles.soundOptions}>
-              <Pressable onPress={() => handleSelectSound('BEEP')}>
-                <Text style={dynamicStyles.soundOptionText(selectedSound === 'BEEP')}>beep</Text>
-              </Pressable>
-              <Text style={dynamicStyles.separator}>·</Text>
-              <Pressable onPress={() => handleSelectSound('BELL')}>
-                <Text style={dynamicStyles.soundOptionText(selectedSound === 'BELL')}>bell</Text>
-              </Pressable>
-              <Text style={dynamicStyles.separator}>·</Text>
-              <Pressable onPress={() => handleSelectSound('CHIME')}>
-                <Text style={dynamicStyles.soundOptionText(selectedSound === 'CHIME')}>chime</Text>
-              </Pressable>
-            </View>
-          </View>
+
         </View>
       )}
 
       {/* Controles de Acción */}
+
       <View style={styles.controlsContainer}>
+
+        {!isActive && (<View style={styles.soundSelectorContainer}>
+          {/* <Text style={dynamicStyles.settingLabel}>alert sound: </Text> */}
+          <View style={styles.soundOptions}>
+            <Pressable onPress={() => handleSelectSound('BEEP')}>
+              <Text style={dynamicStyles.soundOptionText(selectedSound === 'BEEP')}>beep</Text>
+            </Pressable>
+            <Text style={dynamicStyles.separator}>·</Text>
+            <Pressable onPress={() => handleSelectSound('BELL')}>
+              <Text style={dynamicStyles.soundOptionText(selectedSound === 'BELL')}>bell</Text>
+            </Pressable>
+            <Text style={dynamicStyles.separator}>·</Text>
+            <Pressable onPress={() => handleSelectSound('CHIME')}>
+              <Text style={dynamicStyles.soundOptionText(selectedSound === 'CHIME')}>chime</Text>
+            </Pressable>
+          </View>
+        </View>)}
         <Pressable style={dynamicStyles.button} onPress={toggleTimer}>
           <Text style={dynamicStyles.buttonText}>
             {isActive ? 'pause' : 'start'}
@@ -463,11 +466,11 @@ export default function PomodoroScreen() {
           <Text style={dynamicStyles.buttonTextSecondary}>reset timer</Text>
         </Pressable>
 
-        {(currentSession > 1 || mode !== 'WORK') && (
-          <Pressable onPress={resetFullCycle}>
-            <Text style={dynamicStyles.resetAllText}>reset progress</Text>
-          </Pressable>
-        )}
+        {/* {(currentSession > 1 || mode !== 'WORK') && ( */}
+        {isActive && (<Pressable onPress={resetFullCycle}>
+          <Text style={dynamicStyles.resetAllText}>reset progress</Text>
+        </Pressable>)}
+        {/* )} */}
       </View>
     </View>
   );
@@ -562,7 +565,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 34,
-    marginTop: 2,
+    marginBottom: 8,
   },
   soundOptions: {
     flexDirection: 'row',
