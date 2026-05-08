@@ -396,7 +396,7 @@ export default function PomodoroScreen() {
             {/* <Text style={dynamicStyles.settingLabel}>focus time: </Text> */}
             <View style={dynamicStyles.sessionSetter}>
               <Pressable onPress={() => adjustTimerTime('WORK', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
-              <Text style={dynamicStyles.sessionNumber}>{workMinutes}m</Text>
+              {/* <Text style={dynamicStyles.sessionNumber}>{workMinutes}m</Text> */}
               <Pressable onPress={() => adjustTimerTime('WORK', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
             </View>
           </View>)}
@@ -405,7 +405,7 @@ export default function PomodoroScreen() {
             {/* <Text style={dynamicStyles.settingLabel}>short break: </Text> */}
             <View style={dynamicStyles.sessionSetter}>
               <Pressable onPress={() => adjustTimerTime('SHORT', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
-              <Text style={dynamicStyles.sessionNumber}>{shortBreakMinutes}m</Text>
+              {/* <Text style={dynamicStyles.sessionNumber}>{shortBreakMinutes}m</Text> */}
               <Pressable onPress={() => adjustTimerTime('SHORT', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
             </View>
           </View>)}
@@ -414,7 +414,7 @@ export default function PomodoroScreen() {
             {/* <Text style={dynamicStyles.settingLabel}>long break: </Text> */}
             <View style={dynamicStyles.sessionSetter}>
               <Pressable onPress={() => adjustTimerTime('LONG', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
-              <Text style={dynamicStyles.sessionNumber}>{longBreakMinutes}m</Text>
+              {/* <Text style={dynamicStyles.sessionNumber}>{longBreakMinutes}m</Text> */}
               <Pressable onPress={() => adjustTimerTime('LONG', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
             </View>
           </View>)}
@@ -430,25 +430,26 @@ export default function PomodoroScreen() {
           </View>)}
 
 
+
+
+          <View style={styles.soundSelectorContainer}>
+            <Text style={dynamicStyles.settingLabel}>alert sound: </Text>
+            <View style={styles.soundOptions}>
+              <Pressable onPress={() => handleSelectSound('BEEP')}>
+                <Text style={dynamicStyles.soundOptionText(selectedSound === 'BEEP')}>beep</Text>
+              </Pressable>
+              <Text style={dynamicStyles.separator}>·</Text>
+              <Pressable onPress={() => handleSelectSound('BELL')}>
+                <Text style={dynamicStyles.soundOptionText(selectedSound === 'BELL')}>bell</Text>
+              </Pressable>
+              <Text style={dynamicStyles.separator}>·</Text>
+              <Pressable onPress={() => handleSelectSound('CHIME')}>
+                <Text style={dynamicStyles.soundOptionText(selectedSound === 'CHIME')}>chime</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
       )}
-
-      {!isActive && (<View style={styles.soundSelectorContainer}>
-        <Text style={dynamicStyles.settingLabel}>alert sound: </Text>
-        <View style={styles.soundOptions}>
-          <Pressable onPress={() => handleSelectSound('BEEP')}>
-            <Text style={dynamicStyles.soundOptionText(selectedSound === 'BEEP')}>beep</Text>
-          </Pressable>
-          <Text style={dynamicStyles.separator}>·</Text>
-          <Pressable onPress={() => handleSelectSound('BELL')}>
-            <Text style={dynamicStyles.soundOptionText(selectedSound === 'BELL')}>bell</Text>
-          </Pressable>
-          <Text style={dynamicStyles.separator}>·</Text>
-          <Pressable onPress={() => handleSelectSound('CHIME')}>
-            <Text style={dynamicStyles.soundOptionText(selectedSound === 'CHIME')}>chime</Text>
-          </Pressable>
-        </View>
-      </View>)}
 
       {/* Controles de Acción */}
       <View style={styles.controlsContainer}>
@@ -517,7 +518,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 34,
+    height: 40,
   },
   settingLabel: {
     fontSize: 14,
@@ -549,12 +550,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   adjustButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 2,
   },
   adjustButtonText: {
-    fontSize: 16,
-    fontWeight: '300',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   soundSelectorContainer: {
     flexDirection: 'row',
