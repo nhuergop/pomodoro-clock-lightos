@@ -158,7 +158,7 @@ export default function PomodoroScreen() {
       if (player) {
         // Detener otros por si acaso
         [beepPlayer.current, bellPlayer.current, chimePlayer.current].forEach(p => {
-          if (p && p.playing) p.pause();
+          if (p && p.playing) { p.pause(); }
         });
 
         // Resetear y reproducir
@@ -227,7 +227,7 @@ export default function PomodoroScreen() {
         setSecondsLeft(nextMode === 'LONG_BREAK' ? longBreakMinutes * 60 : shortBreakMinutes * 60);
       } else {
         setIsActive(false);
-        alert('¡Felicidades! Has completado todas tus sesiones.');
+        // alert('¡Felicidades! Has completado todas tus sesiones.');
         resetFullCycle();
       }
     } else {
@@ -324,7 +324,7 @@ export default function PomodoroScreen() {
     separator: [styles.separator, { color: colors.border }],
     settingLabel: [styles.settingLabel, { color: colors.textSecondary }],
     settingLabelEnd: [styles.settingLabelEnd, { color: colors.textSecondary }],
-    sessionSetter: [styles.sessionSetter, { borderColor: colors.border }],
+    sessionSetter: [styles.sessionSetter, { borderColor: 'transparent' }],
     sessionNumber: [styles.sessionNumber, { color: colors.textPrimary }],
     sessionNumberFixed: [styles.sessionNumberFixed, { color: colors.textPrimary }],
     adjustButtonText: [styles.adjustButtonText, { color: colors.textPrimary }],
@@ -382,69 +382,73 @@ export default function PomodoroScreen() {
           )}
         </View>
 
-        {!isActive && (
-          <View style={styles.breaksConfigContainer}>
-            <View style={styles.settingItem}>
-              <Text style={dynamicStyles.settingLabel}>focus time: </Text>
-              <View style={dynamicStyles.sessionSetter}>
-                <Pressable onPress={() => adjustTimerTime('WORK', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
-                <Text style={dynamicStyles.sessionNumber}>{workMinutes}m</Text>
-                <Pressable onPress={() => adjustTimerTime('WORK', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
-              </View>
-            </View>
 
-            <View style={styles.settingItem}>
-              <Text style={dynamicStyles.settingLabel}>short break: </Text>
-              <View style={dynamicStyles.sessionSetter}>
-                <Pressable onPress={() => adjustTimerTime('SHORT', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
-                <Text style={dynamicStyles.sessionNumber}>{shortBreakMinutes}m</Text>
-                <Pressable onPress={() => adjustTimerTime('SHORT', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
-              </View>
-            </View>
-
-            <View style={styles.settingItem}>
-              <Text style={dynamicStyles.settingLabel}>long break: </Text>
-              <View style={dynamicStyles.sessionSetter}>
-                <Pressable onPress={() => adjustTimerTime('LONG', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
-                <Text style={dynamicStyles.sessionNumber}>{longBreakMinutes}m</Text>
-                <Pressable onPress={() => adjustTimerTime('LONG', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
-              </View>
-            </View>
-
-            <View style={styles.settingItem}>
-              <Text style={dynamicStyles.settingLabel}>long break every: </Text>
-              <View style={dynamicStyles.sessionSetter}>
-                <Pressable onPress={() => adjustLongBreakInterval('DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
-                <Text style={dynamicStyles.sessionNumber}>{longBreakInterval}</Text>
-                <Pressable onPress={() => adjustLongBreakInterval('INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
-              </View>
-              <Text style={dynamicStyles.settingLabelEnd}> sessions</Text>
-            </View>
-
-            <View style={styles.soundSelectorContainer}>
-              <Text style={dynamicStyles.settingLabel}>alert sound: </Text>
-              <View style={styles.soundOptions}>
-                <Pressable onPress={() => handleSelectSound('BEEP')}>
-                  <Text style={dynamicStyles.soundOptionText(selectedSound === 'BEEP')}>beep</Text>
-                </Pressable>
-                <Text style={dynamicStyles.separator}>·</Text>
-                <Pressable onPress={() => handleSelectSound('BELL')}>
-                  <Text style={dynamicStyles.soundOptionText(selectedSound === 'BELL')}>bell</Text>
-                </Pressable>
-                <Text style={dynamicStyles.separator}>·</Text>
-                <Pressable onPress={() => handleSelectSound('CHIME')}>
-                  <Text style={dynamicStyles.soundOptionText(selectedSound === 'CHIME')}>chime</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        )}
       </View>
 
       {/* Temporizador */}
       <View style={styles.timerContainer}>
         <Text style={dynamicStyles.timerText}>{formatTime(secondsLeft)}</Text>
       </View>
+
+      {!isActive && (
+        <View style={styles.breaksConfigContainer}>
+          {mode === 'WORK' && (<View style={styles.settingItem}>
+            {/* <Text style={dynamicStyles.settingLabel}>focus time: </Text> */}
+            <View style={dynamicStyles.sessionSetter}>
+              <Pressable onPress={() => adjustTimerTime('WORK', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
+              <Text style={dynamicStyles.sessionNumber}>{workMinutes}m</Text>
+              <Pressable onPress={() => adjustTimerTime('WORK', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
+            </View>
+          </View>)}
+
+          {mode === 'SHORT_BREAK' && (<View style={styles.settingItem}>
+            {/* <Text style={dynamicStyles.settingLabel}>short break: </Text> */}
+            <View style={dynamicStyles.sessionSetter}>
+              <Pressable onPress={() => adjustTimerTime('SHORT', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
+              <Text style={dynamicStyles.sessionNumber}>{shortBreakMinutes}m</Text>
+              <Pressable onPress={() => adjustTimerTime('SHORT', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
+            </View>
+          </View>)}
+
+          {mode === 'LONG_BREAK' && (<View style={styles.settingItem}>
+            {/* <Text style={dynamicStyles.settingLabel}>long break: </Text> */}
+            <View style={dynamicStyles.sessionSetter}>
+              <Pressable onPress={() => adjustTimerTime('LONG', 'DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
+              <Text style={dynamicStyles.sessionNumber}>{longBreakMinutes}m</Text>
+              <Pressable onPress={() => adjustTimerTime('LONG', 'INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
+            </View>
+          </View>)}
+
+          {mode === 'LONG_BREAK' && (<View style={styles.settingItem}>
+            <Text style={dynamicStyles.settingLabel}>every</Text>
+            <View style={dynamicStyles.sessionSetter}>
+              <Pressable onPress={() => adjustLongBreakInterval('DEC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>-</Text></Pressable>
+              <Text style={dynamicStyles.sessionNumber}>{longBreakInterval}</Text>
+              <Pressable onPress={() => adjustLongBreakInterval('INC')} style={styles.adjustButton}><Text style={dynamicStyles.adjustButtonText}>+</Text></Pressable>
+            </View>
+            <Text style={dynamicStyles.settingLabelEnd}>sessions</Text>
+          </View>)}
+
+
+        </View>
+      )}
+
+      {!isActive && (<View style={styles.soundSelectorContainer}>
+        <Text style={dynamicStyles.settingLabel}>alert sound: </Text>
+        <View style={styles.soundOptions}>
+          <Pressable onPress={() => handleSelectSound('BEEP')}>
+            <Text style={dynamicStyles.soundOptionText(selectedSound === 'BEEP')}>beep</Text>
+          </Pressable>
+          <Text style={dynamicStyles.separator}>·</Text>
+          <Pressable onPress={() => handleSelectSound('BELL')}>
+            <Text style={dynamicStyles.soundOptionText(selectedSound === 'BELL')}>bell</Text>
+          </Pressable>
+          <Text style={dynamicStyles.separator}>·</Text>
+          <Pressable onPress={() => handleSelectSound('CHIME')}>
+            <Text style={dynamicStyles.soundOptionText(selectedSound === 'CHIME')}>chime</Text>
+          </Pressable>
+        </View>
+      </View>)}
 
       {/* Controles de Acción */}
       <View style={styles.controlsContainer}>
@@ -545,7 +549,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   adjustButton: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     paddingVertical: 2,
   },
   adjustButtonText: {
