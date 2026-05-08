@@ -1,7 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createAudioPlayer } from 'expo-audio';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
-import { useAudioPlayer, createAudioPlayer } from 'expo-audio';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type TimerMode = 'WORK' | 'SHORT_BREAK' | 'LONG_BREAK';
 type SoundType = 'BEEP' | 'BELL' | 'CHIME';
@@ -19,7 +19,7 @@ interface UserSettings {
 
 export default function PomodoroScreen() {
   const systemColorScheme = useColorScheme();
-  
+
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
@@ -70,10 +70,14 @@ export default function PomodoroScreen() {
   const [isSettingsLoaded, setIsSettingsLoaded] = useState<boolean>(false); // Evita sobreescrituras al iniciar
 
   // Creamos y guardamos la instancia del reproductor nativo
-  const beepPlayer = useRef(createAudioPlayer(require('../assets/sounds/beep.wav'))).current;
-  const bellPlayer = useRef(createAudioPlayer(require('../assets/sounds/bell.wav'))).current;
-  const chimePlayer = useRef(createAudioPlayer(require('../assets/sounds/chime.wav'))).current;
+  // const beepPlayer = useRef(createAudioPlayer(require('../assets/sounds/beep.wav'))).current;
+  // const bellPlayer = useRef(createAudioPlayer(require('../assets/sounds/bell.wav'))).current;
+  // const chimePlayer = useRef(createAudioPlayer(require('../assets/sounds/chime.wav'))).current;
+  const beepPlayer = useRef<any>(null);
+  const bellPlayer = useRef<any>(null);
+  const chimePlayer = useRef<any>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onTimerCompleteRef = useRef(handleTimerComplete);
 
   // --- NUEVO: Cargar configuraciones guardadas al iniciar la App ---
   useEffect(() => {
@@ -127,39 +131,44 @@ export default function PomodoroScreen() {
     saveSettings();
   }, [workMinutes, shortBreakMinutes, longBreakMinutes, longBreakInterval, totalSessions, selectedSound, isSettingsLoaded]);
 
+  useEffect(() => {
+    // Inicializamos los reproductores solo una vez
+    beepPlayer.current = createAudioPlayer(require('../assets/sounds/beep.wav'));
+    bellPlayer.current = createAudioPlayer(require('../assets/sounds/bell.wav'));
+    chimePlayer.current = createAudioPlayer(require('../assets/sounds/chime.wav'));
+
+    return () => {
+      // CRÍTICO: Liberar recursos al cerrar la app o desmontar el componente
+      // Dependiendo de la versión de expo-audio, puede ser .unmount(), .unloadAsync() o .close()
+      // Consultar si tu versión requiere limpieza manual para liberar RAM
+      if (beepPlayer.current?.terminate) beepPlayer.current.terminate();
+      if (bellPlayer.current?.terminate) bellPlayer.current.terminate();
+      if (chimePlayer.current?.terminate) chimePlayer.current.terminate();
+    };
+  }, []);
+
 
   const playNotificationSound = (type: SoundType) => {
     try {
-     
-      if (beepPlayer && bellPlayer && chimePlayer) {
-        // Pausamos los reproductores si están sonando
-        if (beepPlayer.playing) beepPlayer.pause();
-        if (bellPlayer.playing) bellPlayer.pause();
-        if (chimePlayer.playing) chimePlayer.pause();
+      const player =
+        type === 'BEEP' ? beepPlayer.current :
+          type === 'BELL' ? bellPlayer.current :
+            chimePlayer.current;
 
-        // REINICIO DE TIEMPO CORRECTO usando seekTo (API nativa de expo-audio)
-        if (typeof beepPlayer.seekTo === 'function') {
-          beepPlayer.seekTo(0);
-          bellPlayer.seekTo(0);
-          chimePlayer.seekTo(0);
-        } else {
-          // Fallback por si tu versión exacta usa .seek() en lugar de .seekTo()
-          (beepPlayer as any).seek?.(0);
-          (bellPlayer as any).seek?.(0);
-          (chimePlayer as any).seek?.(0);
-        }
+      if (player) {
+        // Detener otros por si acaso
+        [beepPlayer.current, bellPlayer.current, chimePlayer.current].forEach(p => {
+          if (p && p.playing) p.pause();
+        });
 
-        // Reproducir el seleccionado
-        if (type === 'BEEP') {
-          beepPlayer.play();
-        } else if (type === 'BELL') {
-          bellPlayer.play();
-        } else if (type === 'CHIME') {
-          chimePlayer.play();
+        // Resetear y reproducir
+        if (typeof player.seekTo === 'function') {
+          player.seekTo(0);
         }
+        player.play();
       }
     } catch (e) {
-      console.warn("Error when reproducing native sound with expo-audio:", e);
+      console.warn("Error audio:", e);
     }
   };
 
@@ -174,60 +183,54 @@ export default function PomodoroScreen() {
     }
   };
 
-  // Efecto para actualizar los segundos en pantalla si el usuario cambia los tiempos (mientras no esté activo)
   useEffect(() => {
-    if (!isActive && isSettingsLoaded) {
-      setSecondsLeft(getSecondsForMode(mode));
-    }
-  }, [workMinutes, shortBreakMinutes, longBreakMinutes, mode, isSettingsLoaded]);
+    onTimerCompleteRef.current = handleTimerComplete;
+  }, [mode, currentSession, totalSessions, workMinutes, shortBreakMinutes, longBreakMinutes, longBreakInterval]);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
     if (isActive) {
-      timerRef.current = window.setInterval(() => {
+      interval = setInterval(() => {
         setSecondsLeft((prev) => {
           if (prev <= 1) {
-            handleTimerComplete();
+            // Usamos la referencia para no depender de nada externo
+            if (interval) clearInterval(interval);
+            onTimerCompleteRef.current();
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
     }
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-   
+      if (interval) clearInterval(interval);
     };
-  }, [isActive, mode, currentSession, totalSessions, workMinutes, shortBreakMinutes, longBreakMinutes, longBreakInterval]);
+  }, [isActive]); // <--- SOLO depende de isActive
 
-  const handleTimerComplete = () => {
+  function handleTimerComplete() {
     playNotificationSound(selectedSound);
 
     if (mode === 'WORK') {
       if (currentSession < totalSessions) {
         const isTimeForLongBreak = currentSession % longBreakInterval === 0;
+        const nextMode = isTimeForLongBreak ? 'LONG_BREAK' : 'SHORT_BREAK';
 
-        if (isTimeForLongBreak) {
-          setMode('LONG_BREAK');
-          setSecondsLeft(longBreakMinutes * 60);
-        } else {
-          setMode('SHORT_BREAK');
-          setSecondsLeft(shortBreakMinutes * 60);
-        }
+        setMode(nextMode);
+        setSecondsLeft(nextMode === 'LONG_BREAK' ? longBreakMinutes * 60 : shortBreakMinutes * 60);
       } else {
         setIsActive(false);
-        if (timerRef.current) clearInterval(timerRef.current);
-        alert('¡Felicidades! Has completado todas tus sesiones del ciclo.');
+        alert('¡Felicidades! Has completado todas tus sesiones.');
         resetFullCycle();
       }
     } else {
+      // Si terminamos un descanso, volvemos a trabajar e incrementamos sesión
       setCurrentSession((prev) => prev + 1);
       setMode('WORK');
       setSecondsLeft(workMinutes * 60);
     }
-  };
+  }
 
   const toggleTimer = () => {
     setIsActive(!isActive);
@@ -252,7 +255,7 @@ export default function PomodoroScreen() {
   };
 
   const incrementSessions = () => {
-    if (!isActive) setTotalSessions((prev) => Math.min(prev + 24, 24));
+    if (!isActive) setTotalSessions((prev) => Math.min(prev + 1, 24));
   };
 
   const decrementSessions = () => {
