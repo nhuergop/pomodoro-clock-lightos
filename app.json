@@ -20,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.pomodoroclocklightos"
+      "package": "com.nhuergop.pomodoroclocklightos"
     },
     "web": {
       "output": "static",
